@@ -3,10 +3,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskInput = document.getElementById('task-input');
     const taskList = document.getElementById('task-list');
 
-    function addTask() {
-        const taskText = taskInput.value.trim();
+    // Load tasks from Local Storage
+    function loadTasks() {
+        const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        storedTasks.forEach(taskText => addTask(taskText, false)); // false: don't save again
+    }
+
+    // Add task function
+    function addTask(taskTextParam = null, save = true) {
+        const taskText = taskTextParam || taskInput.value.trim();
         if (taskText === "") {
-            alert("Please enter a task.");
+            if (!taskTextParam) alert("Please enter a task.");
             return;
         }
 
@@ -17,28 +24,43 @@ document.addEventListener('DOMContentLoaded', () => {
         // Create remove button
         const removeBtn = document.createElement('button');
         removeBtn.textContent = "Remove";
-        removeBtn.classList.add('remove-btn'); // ✅ add class
+        removeBtn.classList.add('remove-btn');
         removeBtn.onclick = () => {
             taskList.removeChild(li);
+            updateLocalStorage();
         };
 
-        // Append remove button to list item
+        // Append remove button to list item and list item to task list
         li.appendChild(removeBtn);
-
-        // Append list item to task list
         taskList.appendChild(li);
 
-        // Clear input
-        taskInput.value = "";
+        // Save to Local Storage
+        if (save) {
+            updateLocalStorage();
+        }
+
+        // Clear input if manually added
+        if (!taskTextParam) taskInput.value = "";
     }
 
-    // Click event
-    addButton.addEventListener('click', addTask);
+    // Update Local Storage with current tasks
+    function updateLocalStorage() {
+        const tasks = [];
+        taskList.querySelectorAll('li').forEach(li => {
+            // Exclude the Remove button text
+            const text = li.firstChild.textContent;
+            tasks.push(text);
+        });
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
 
-    // Enter key event
+    // Event listeners
+    addButton.addEventListener('click', addTask);
     taskInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            addTask();
-        }
+        if (event.key === 'Enter') addTask();
     });
+
+    // Initial load
+    loadTasks();
 });
+
